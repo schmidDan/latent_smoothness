@@ -1,0 +1,52 @@
+[build-system]
+requires = ["setuptools>=77", "wheel"]
+build-backend = "setuptools.build_meta"
+
+[project]
+name = "latent_smoothness"
+version = "0.1.0"
+description = "Diagnostics for the geometry and smoothness of learned latent spaces, plus controlled latent warps for ablations."
+readme = "README.md"
+license = "MIT"
+license-files = ["LICENSE"]
+authors = [{ name = "Daniel Schmid", email = "daniel-1.schmid@uni-ulm.de" }]
+requires-python = ">=3.10"
+keywords = ["latent space", "VAE", "representation learning", "geometry", "smoothness", "pullback metric", "intrinsic dimension"]
+classifiers = [
+    "Development Status :: 3 - Alpha",
+    "Intended Audience :: Science/Research",
+    "Programming Language :: Python :: 3",
+    "Topic :: Scientific/Engineering :: Artificial Intelligence",
+]
+dependencies = [
+    "torch>=2.0",
+    "numpy",
+    "scikit-learn",
+    "threadpoolctl",
+    "torchdiffeq",
+]
+
+[project.optional-dependencies]
+ppl = ["lpips"]          # perceptual path length (compute_ppl)
+flow = ["normflows"]     # normalizing-flow warp (FlowWarp)
+all = ["lpips", "normflows"]
+examples = ["matplotlib"]
+dev = [
+    "pytest",
+    "pytest-cov",
+    "pytest-xdist[psutil]",
+]
+
+[project.urls]
+Repository = "https://github.com/schmidDan/latent_smoothness"
+Issues = "https://github.com/schmidDan/latent_smoothness/issues"
+
+[tool.pytest.ini_options]
+testpaths = ["tests"]
+markers = [
+    "slow: long-running tests (LPIPS/VGG perceptual distances, many-step ODE solves); deselect with -m 'not slow'",
+]
+
+[tool.setuptools.packages.find]
+where = ["."]
+include = ["latent_smoothness*"]
