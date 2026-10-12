@@ -3,7 +3,7 @@ import torch
 from sklearn.model_selection import cross_val_score
 from sklearn.neighbors import KNeighborsRegressor
 
-from _common import plt, save, latent_grid, class_regions, class_scatter, CLASS_COLORS
+from _common import plt, save, class_regions, class_scatter, CLASS_COLORS
 from toy_models import get_toy_models, _make_dataset, CLASS_NAMES
 
 decoder, classifier, z_train, y_train = get_toy_models()

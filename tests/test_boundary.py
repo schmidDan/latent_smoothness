@@ -18,7 +18,7 @@ def test_gradient_norms_match_linear(linear_classifier, unit_gaussian_latents):
     result = compute_boundary_geometry(linear_classifier, unit_gaussian_latents)
     expected = expected_norm.expand(unit_gaussian_latents.shape[0])
     assert torch.allclose(result.gradient_norms, expected, atol=1e-5), \
-        f"Gradient norms should equal ||W[0,:] - W[1,:]||"
+        "Gradient norms should equal ||W[0,:] - W[1,:]||"
 
 
 def test_curvature_zero_for_linear(linear_classifier, unit_gaussian_latents):

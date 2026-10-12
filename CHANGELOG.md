@@ -20,4 +20,4 @@
 - Functional primitives `posthoc_vq`, `bijective_scramble`, `class_constrained_scramble`, `FlowWarp`, `fit_flow_ensemble`.
 
 ### Examples
-- Twelve runnable examples on a toy 2-D VAE with a three-class latent classifier, each saving a figure and checking its expected outcome; `examples/run_all.py` runs them all. The figures are included in `examples/figures/` and shown in `examples/README.md`.
+- Thirteen runnable examples on a toy 2-D VAE with a three-class latent classifier, each saving a figure and checking its expected outcome; `examples/run_all.py` runs them all. The figures are included in `examples/figures/` and shown in `examples/README.md`.

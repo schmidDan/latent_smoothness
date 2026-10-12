@@ -1,7 +1,7 @@
 # Examples
 
-Twelve small, self-contained scripts: an overview of the shared toy model, then one per
-diagnostic or warp. Every
+Thirteen small, self-contained scripts: an overview of the shared toy model, one per
+diagnostic or warp, and two that compare all warps. Every
 script saves a figure and ends with a pass/fail check of its expected outcome.
 
 ```bash
@@ -32,6 +32,7 @@ models are cached in `examples/outputs/`.
 | [`ex09_mine_verification.py`](ex09_mine_verification.py) | MINE mutual information, and where it fails |
 | [`ex10_full_suite.py`](ex10_full_suite.py) | `DiagnosticSuite` on confident vs. ambiguous latents |
 | [`ex11_warp_gallery.py`](ex11_warp_gallery.py) | All six warps by smoothness, readability and class arrangement |
+| [`ex12_decoded_paths.py`](ex12_decoded_paths.py) | Roughness made visible: one path through each warped space, decoded |
 
 ---
 
@@ -159,3 +160,17 @@ The warps vary these independently. `scramble` and within-class `class_scramble`
 and equally readable, but only the latter keeps the class arrangement. `piecewise_affine` is rough
 but fully readable. `class_collapse` is perfectly smooth but loses class information. `flow_warp`
 stays smooth and readable while moving the classes around.
+
+### ex12: Decoded paths through the warped latent spaces
+
+![ex12](figures/ex12_decoded_paths.png)
+
+What the stretch numbers of ex11 mean for generated images. The same two latents are mapped into
+each warped space, the straight line between them is walked there, and every step is decoded via
+`decoder(warp.backproject(z'))`. In the original space the bump glides from corner to corner.
+`vq` moves it in discrete steps. `scramble` and `class_scramble` make it teleport whenever the path
+enters a new cell, and `piecewise_affine` jumps at cell boundaries while moving smoothly inside each
+cell. `flow_warp` never jumps, but where the path crosses a low-density region the bump sweeps across
+the image within a few steps, which is the flow's large local stretch. `class_collapse` glides
+smoothly, but its start and end images differ from the original ones, because the collapse has
+discarded that information.

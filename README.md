@@ -18,7 +18,7 @@ Encoding is always the caller's job: the library only takes latent tensors and
 ![Warp gallery](examples/figures/ex11_warp_gallery.png)
 *The six warps applied to the 2-D latents of a toy VAE (colour = class), placed by how rough the
 map is, whether the class information survives, and whether the classes stay where they were.
-See [`examples/`](examples/README.md) for this and eleven more worked examples.*
+See [`examples/`](examples/README.md) for this and twelve more worked examples.*
 
 ## Installation
 
@@ -119,8 +119,8 @@ provide `forward_ste`, a straight-through estimator with an identity gradient.
 
 ## Examples
 
-`examples/` contains twelve runnable scripts on small toy models: an overview of the shared toy
-VAE, then one per diagnostic or warp.
+`examples/` contains thirteen runnable scripts on small toy models: an overview of the shared
+toy VAE, one per diagnostic or warp, and two that compare all warps.
 Each one saves a figure and asserts its expected outcome. The
 [examples README](examples/README.md) shows every figure with a short explanation;
 `python examples/run_all.py` runs them all.
@@ -143,6 +143,9 @@ pytest -n auto                  # everything, incl. LPIPS-based tests (downloads
   length of the *straight* latent path, not a shortest path under the pullback metric. The
   fixed-step `euler`/`rk4` solvers can slightly undershoot the chord on very smooth decoders
   (small negative discrepancies).
+- **PPL spike detection** reports at most one spike per path: the interior maximum, if it exceeds
+  3× the median of its ±10% neighbourhood. Several nearby rough spots can mask each other (see
+  `examples/ex03_ppl_profile.py`); use `PPLResult.ppl_values` for the full profile.
 - **MINE bias.** The Donsker–Varadhan estimate has a finite-sample positive bias (≈0.2 nats for
   independent 4-d Gaussians at N=1024). It also underestimates MI for bijections over many cells
   (e.g. a 64-cell scramble), because the critic cannot learn all cell associations

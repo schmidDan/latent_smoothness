@@ -5,7 +5,6 @@ exactly W and every secant ratio is ‖W d̂‖ (constant across scales).
 Degenerate reference: a quantized decoder f(z) = W * round(z/c), piecewise
 constant in z (zero gradient a.e.), the same family as vq/scramble.
 """
-import numpy as np
 import torch
 import torch.nn as nn
 
