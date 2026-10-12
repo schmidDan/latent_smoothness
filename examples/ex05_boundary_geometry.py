@@ -10,7 +10,7 @@ torch.manual_seed(0)
 decoder, classifier, z_train, y_train = get_toy_models()
 CLASS = 0
 
-gx, gy, pts = latent_grid(z_train, n=45, pad=0.2)
+gx, gy, pts = latent_grid(z_train, n=70, pad=0.2)
 geo = compute_boundary_geometry(classifier, pts, class_idx=CLASS)
 margin = geo.margins.reshape(gx.shape)
 

@@ -13,7 +13,7 @@ Usage:
     from toy_models import get_toy_models
     decoder, classifier, z_train, y_train = get_toy_models()
 
-Models are trained once (about a minute on CPU) and cached in
+Models are trained once (about a minute on CPU, single-threaded for reproducibility) and cached in
 ``examples/outputs/``.
 """
 import math
@@ -143,12 +143,21 @@ def get_toy_models():
         clf.load_state_dict(ckpt["classifier"])
         z_train, y_train = ckpt["z_train"], ckpt["y_train"]
     else:
-        x, y_train, _ = _make_dataset()
-        vae = _train_vae(x)
-        vae.eval()
-        with torch.no_grad():
-            z_train, _ = vae.encoder(x)
-        clf = _train_classifier(z_train, y_train)
+        # Train with one thread (bit-reproducible across machines with the same
+        # torch build) and in an isolated RNG context, so that the caller's random
+        # state is the same whether or not the models came from the cache.
+        n_threads = torch.get_num_threads()
+        torch.set_num_threads(1)
+        try:
+            with torch.random.fork_rng(devices=[]):
+                x, y_train, _ = _make_dataset()
+                vae = _train_vae(x)
+                vae.eval()
+                with torch.no_grad():
+                    z_train, _ = vae.encoder(x)
+                clf = _train_classifier(z_train, y_train)
+        finally:
+            torch.set_num_threads(n_threads)
         torch.save({"vae": vae.state_dict(), "classifier": clf.state_dict(),
                     "z_train": z_train, "y_train": y_train}, CACHE_PATH)
     vae.eval()

@@ -44,3 +44,7 @@ jobs:
           pip install -e ".[all,dev]"
       - name: Slow tests (LPIPS downloads VGG weights, ~0.5 GB)
         run: pytest -m slow -n auto
+      - name: Examples (each script checks its expected outcome)
+        run: |
+          pip install matplotlib
+          python examples/run_all.py

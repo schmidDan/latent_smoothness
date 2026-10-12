@@ -17,8 +17,8 @@ Encoding is always the caller's job: the library only takes latent tensors and
 
 ![Warp gallery](examples/figures/ex11_warp_gallery.png)
 *The six warps applied to the 2-D latents of a toy VAE (colour = class), placed by how rough the
-map is and whether the class information survives. See [`examples/`](examples/README.md) for
-this and ten more worked examples.*
+map is, whether the class information survives, and whether the classes stay where they were.
+See [`examples/`](examples/README.md) for this and eleven more worked examples.*
 
 ## Installation
 
@@ -119,7 +119,8 @@ provide `forward_ste`, a straight-through estimator with an identity gradient.
 
 ## Examples
 
-`examples/` contains eleven runnable scripts, one per diagnostic or warp, on small toy models.
+`examples/` contains twelve runnable scripts on small toy models: an overview of the shared toy
+VAE, then one per diagnostic or warp.
 Each one saves a figure and asserts its expected outcome. The
 [examples README](examples/README.md) shows every figure with a short explanation;
 `python examples/run_all.py` runs them all.

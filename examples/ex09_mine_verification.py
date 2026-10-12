@@ -64,14 +64,15 @@ for ax, n in zip(axes, SIZES):
             color = shades.get(key[:2], "0.4")
             bar = ax.bar(x, res[key], width=0.8, color=color,
                          label=names.get(key[:2]) if (n == SIZES[0] and key.endswith("64")) else None)
-            ax.bar_label(bar, fmt="%.2f", fontsize=8)
+            ax.bar_label(bar, fmt="%.2f", fontsize=8, zorder=4,
+                         bbox=dict(boxstyle="square,pad=0.1", fc="white", ec="none"))
             xs.append(x)
             x += 1
         ticks.append((sum(xs) / len(xs), g_label))
         if g_label.startswith("K"):
             k = int(g_label.split("=")[1])
             ax.hlines(math.log(k), xs[0] - 0.5, xs[-1] + 0.5, colors="k", linestyles="--", lw=1)
-            ax.text(xs[-1] + 0.5, math.log(k), f" log {k}", va="center", fontsize=8)
+            ax.text(xs[0] - 0.5, math.log(k), f"log {k} ", va="center", ha="right", fontsize=8)
         x += 0.8
     ax.set_xticks([t for t, _ in ticks], [lbl for _, lbl in ticks])
     ax.set_title(f"N = {n:,}  ({n // 64} samples per cell at K = 64)")

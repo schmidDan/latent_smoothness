@@ -1,6 +1,7 @@
 # Examples
 
-Eleven small, self-contained scripts, each demonstrating one diagnostic or warp. Every
+Twelve small, self-contained scripts: an overview of the shared toy model, then one per
+diagnostic or warp. Every
 script saves a figure and ends with a pass/fail check of its expected outcome.
 
 ```bash
@@ -14,10 +15,12 @@ Most examples share a **toy model** (`toy_models.py`). It is a VAE with a 2-D la
 trained on 16×16 images of a Gaussian bump at a continuous position, so the latent space
 is a smooth 2-D sheet of bump positions. A small classifier on the latents assigns three
 classes by the bump's angle sector, so the classes meet at the image centre. Training
-takes about 30 seconds on a CPU, and the trained models are cached in `examples/outputs/`.
+takes about 20 seconds on a CPU (single-threaded, so it is reproducible), and the trained
+models are cached in `examples/outputs/`.
 
 | Script | Shows |
 |--------|-------|
+| [`ex00_toy_model.py`](ex00_toy_model.py) | The toy model: data, latent space, reconstructions, classifier |
 | [`ex01_jacobian_spectrum.py`](ex01_jacobian_spectrum.py) | Decoder Jacobian spectrum and where a decoder is rough |
 | [`ex02_geodesic_discrepancy.py`](ex02_geodesic_discrepancy.py) | Pullback metric and output-space path length |
 | [`ex03_ppl_profile.py`](ex03_ppl_profile.py) | Perceptual path length and spike detection |
@@ -28,9 +31,20 @@ takes about 30 seconds on a CPU, and the trained models are cached in `examples/
 | [`ex08_flow_warp.py`](ex08_flow_warp.py) | `flow_warp`: a learned smooth bijection |
 | [`ex09_mine_verification.py`](ex09_mine_verification.py) | MINE mutual information, and where it fails |
 | [`ex10_full_suite.py`](ex10_full_suite.py) | `DiagnosticSuite` on confident vs. ambiguous latents |
-| [`ex11_warp_gallery.py`](ex11_warp_gallery.py) | All six warps by smoothness and readability |
+| [`ex11_warp_gallery.py`](ex11_warp_gallery.py) | All six warps by smoothness, readability and class arrangement |
 
 ---
+
+### ex00: The toy model
+
+![ex00](figures/ex00_toy_model.png)
+
+Training images show a single bump, and the frame colour is the class, i.e. the angle sector of the
+bump position. Colouring the latents by the true horizontal and vertical bump position shows that
+the VAE has recovered both generative factors as a smooth 2-D sheet. It happens to encode the
+horizontal position along `z₂` and the vertical along `z₁`, a rotation that does not matter. The
+decoded grid (bottom middle) shows the bump moving continuously across the latent space, and the
+latent classifier separates the three sectors, which meet near the centre of the sheet.
 
 ### ex01: Jacobian spectrum
 
@@ -75,10 +89,12 @@ latents. Per-point estimates (middle) are noisy, but their rolling median and th
 ![ex05](figures/ex05_boundary_geometry.png)
 
 All quantities are computed on the decision margin `m(z) = l₀ − max_{j≠0} l_j` of class 0, whose
-zero level set (black line) is the class-0 decision boundary. The margin gradient concentrates near
-the boundary, and the curvature shows where the boundary bends, including the kink where class 0's
-strongest competitor switches. Bottom right: straight latent paths and the points where they cross
-the class-0 boundary.
+zero level set (black line) is the class-0 decision boundary. The margin changes fastest in a band
+around the boundary. The curvature panel shows the size of the margin's Hessian, which is largest in
+the transition zones where the classifier's units saturate and along the line where class 0's
+strongest competitor switches between classes 1 and 2 (a kink in the margin). It is a property of
+the margin function, not of the boundary line's shape. Bottom right: straight latent paths and the
+points where they cross the class-0 boundary.
 
 ### ex06: Gradient alignment
 
@@ -129,9 +145,17 @@ and no class separation (Fisher ratio ≈ 0).
 
 ![ex11](figures/ex11_warp_gallery.png)
 
-The same latents under every warp, coloured by their original class. Each warp is placed by its
-**max local stretch** (largest secant ratio at the smallest step; it explodes for maps that jump
-across cell boundaries) and its **readability** (accuracy of a classifier *retrained* on the warped
-latents). The warps vary these independently: `piecewise_affine` is rough but fully readable,
-`class_collapse` is perfectly smooth but loses class information, and `flow_warp` stays smooth and
-readable.
+The same latents under every warp, coloured by their original class. Three numbers characterise
+each warp:
+
+- **stretch:** the largest secant ratio at the smallest step. It explodes for maps that jump across
+  cell boundaries.
+- **readability:** the accuracy of a classifier *retrained* on the warped latents, i.e. whether the
+  class information survives.
+- **arrangement:** the accuracy of the *original* classifier on the warped latents, i.e. whether
+  classes stay where they were.
+
+The warps vary these independently. `scramble` and within-class `class_scramble` are equally rough
+and equally readable, but only the latter keeps the class arrangement. `piecewise_affine` is rough
+but fully readable. `class_collapse` is perfectly smooth but loses class information. `flow_warp`
+stays smooth and readable while moving the classes around.
