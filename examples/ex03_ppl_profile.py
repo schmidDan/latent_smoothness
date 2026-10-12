@@ -1,58 +1,57 @@
-"""ex03: PPL profile — rough_spatial inline decoder with known spike at ||z||=1."""
-from pathlib import Path
+"""ex03: Perceptual path length — an image decoder with a narrow rough shell at ||z|| = 1."""
 import torch
 import torch.nn as nn
-import matplotlib
-matplotlib.use("Agg")
-import matplotlib.pyplot as plt
+
+from _common import plt, save
 from latent_smoothness import compute_ppl
 
-OUT = Path(__file__).parent / "outputs"
-OUT.mkdir(exist_ok=True)
-
 torch.manual_seed(0)
+DZ, M, R0, R1 = 4, 8, 0.5, 2.0
+
 
 class RoughSpatialDecoder(nn.Module):
+    """Linear 8x8 image decoder of a radially rescaled z; sharp bump in the scale at ||z|| = 1."""
     def __init__(self):
         super().__init__()
-        self.linear = nn.Linear(4, 64, bias=False)
+        self.linear = nn.Linear(DZ, 64, bias=False)
         self.unflatten = nn.Unflatten(-1, (1, 8, 8))
+
     def forward(self, z):
         scale = 1.0 + 10.0 * torch.exp(-1000 * (z.norm(dim=-1, keepdim=True) - 1.0) ** 2)
         return self.unflatten(self.linear(z * scale))
 
+
 decoder = RoughSpatialDecoder()
-DZ, M = 4, 8
-z = torch.randn(32, DZ)
-z_dir = z[:M] / z[:M].norm(dim=-1, keepdim=True)
-z_start = z_dir * 0.5
-z_end = z_dir * 2.0
+directions = torch.randn(M, DZ)
+directions = directions / directions.norm(dim=-1, keepdim=True)
+z_start, z_end = directions * R0, directions * R1          # radial paths ||z||: 0.5 -> 2.0
 
 result = compute_ppl(decoder, z_start, z_end, n_steps=100, device="cpu")
+T = result.ppl_values.shape[1]
+radius = R0 + (R1 - R0) * (torch.arange(T) + 0.5) / T        # ||z|| at each segment midpoint
 
-fig, axes = plt.subplots(1, 2, figsize=(10, 4))
-for i in range(min(4, M)):
-    t = torch.linspace(0, 1, result.ppl_values.shape[1]).numpy()
-    axes[0].plot(t, result.ppl_values[i].detach().numpy(), alpha=0.7, label=f"path {i}")
-    spikes = result.ppl_spikes[i].nonzero().squeeze(-1)
-    for s in spikes:
-        axes[0].axvline(t[s], color="red", lw=0.8, alpha=0.6)
-axes[0].set_title("PPL profile (red=spike)")
-axes[0].set_xlabel("t"); axes[0].set_ylabel("LPIPS")
-axes[0].legend(fontsize=7)
+fig, axes = plt.subplots(1, 2, figsize=(11, 3.6), width_ratios=[2, 1])
+for i in range(M):
+    axes[0].plot(radius, result.ppl_values[i], lw=1, alpha=0.8)
+spikes = result.ppl_spikes.nonzero()
+axes[0].scatter(radius[spikes[:, 1]], result.ppl_values[spikes[:, 0], spikes[:, 1]],
+                color="red", zorder=3, s=25, label="detected spike")
+axes[0].set_yscale("log")
+axes[0].set_xlabel(r"$\|z\|$ along the radial path")
+axes[0].set_ylabel("LPIPS between consecutive frames")
+axes[0].set_title(f"Per-segment perceptual distance ({M} paths)")
+axes[0].legend()
 
-if result.spike_z_locations.numel() > 0:
-    norms = result.spike_z_locations.norm(dim=-1).detach().numpy()
-    axes[1].scatter(range(len(norms)), norms, s=40)
-    axes[1].axhline(1.0, color="red", lw=2, label="||z||=1.0")
-    axes[1].set_title("Spike z-location norms")
-    axes[1].set_xlabel("Spike index"); axes[1].set_ylabel("||z||"); axes[1].legend()
+norms = result.spike_z_locations.norm(dim=-1)
+axes[1].hist(norms, bins=20, range=(R0, R1), color="red", alpha=0.7)
+axes[1].axvline(1.0, color="0.3", ls="--", lw=1, label=r"rough shell $\|z\|=1$")
+axes[1].set_xlabel(r"$\|z\|$ at detected spike")
+axes[1].set_ylabel("count")
+axes[1].set_title("Spike locations")
+axes[1].legend()
+fig.suptitle("ex03  Perceptual path length: spikes flag where the decoded images change abruptly")
+save(fig, "ex03_ppl_profile")
 
-fig.tight_layout()
-fig.savefig(OUT / "ex03_ppl_profile.png", dpi=80)
-plt.close()
-
-n_spikes = int(result.ppl_spikes.sum())
-print(f"PPL spike detected at expected location "
-      + ("PASS" if n_spikes > 0 else "FAIL (no spikes found)"))
-assert n_spikes > 0
+ok = int(result.ppl_spikes.sum()) > 0 and bool(((norms - 1.0).abs() < 0.1).all())
+print(f"{int(result.ppl_spikes.sum())} PPL spikes, all within 0.1 of ||z||=1: " + ("PASS" if ok else "FAIL"))
+assert ok

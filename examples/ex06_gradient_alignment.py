@@ -1,49 +1,65 @@
-"""ex06: Displacement / decision-margin-gradient alignment — toy_models.py VAE + classifier."""
-from pathlib import Path
+"""ex06: Alignment of latent displacements with the decision-margin gradient (toy VAE + classifier)."""
 import torch
-import matplotlib
-matplotlib.use("Agg")
-import matplotlib.pyplot as plt
-from latent_smoothness import compute_gradient_alignment
-from toy_models import get_toy_models
 
-OUT = Path(__file__).parent / "outputs"
-OUT.mkdir(exist_ok=True)
+from _common import plt, save, class_regions, class_scatter
+from latent_smoothness import compute_gradient_alignment
+from latent_smoothness.utils import decision_margin
+from toy_models import get_toy_models
 
 torch.manual_seed(0)
 decoder, classifier, z_train, y_train = get_toy_models()
+TARGET, STEP, N = 0, 0.4, 200
 
-N = 64
-z_before = z_train[:N]
-# Move along the gradient of the class-0 decision margin (l_0 - l_1 for 2 classes)
-W = classifier.weight
-delta = (W[0] - W[1]) / (W[0] - W[1]).norm()
-z_after = z_before + delta.unsqueeze(0).expand(N, -1)
+# Start from latents of the other classes and move them toward class TARGET in three ways.
+others = z_train[y_train != TARGET]
+z0 = others[torch.randperm(others.shape[0])[:N]]
 
-result = compute_gradient_alignment(classifier, z_before, z_after)
+z_req = z0.clone().requires_grad_(True)
+grad = torch.autograd.grad(decision_margin(classifier(z_req), TARGET).sum(), z_req)[0]
+centroid = z_train[y_train == TARGET].mean(dim=0)
+random_dir = torch.randn(N, 2)
 
-fig, axes = plt.subplots(1, 2, figsize=(10, 4))
 
-# Quiver plot
+def unit(v):
+    return v / v.norm(dim=-1, keepdim=True)
+
+
+strategies = {
+    "along margin gradient": unit(grad),
+    "toward class centroid": unit(centroid - z0),
+    "random direction": unit(random_dir),
+}
+colors = {"along margin gradient": "C2", "toward class centroid": "C1", "random direction": "0.5"}
+results = {name: compute_gradient_alignment(classifier, z0, z0 + STEP * d, class_idx=TARGET)
+           for name, d in strategies.items()}
+
+fig, axes = plt.subplots(1, 2, figsize=(12, 4.8), width_ratios=[1, 1.15])
 ax = axes[0]
-z2 = z_before.detach().numpy()
-d2 = (z_after - z_before).detach().numpy()
-ax.quiver(z2[:, 0], z2[:, 1], d2[:, 0], d2[:, 1], alpha=0.5,
-          color="blue", label="Δμ", scale=20)
-ax.set_title("Latent displacements Δμ")
-ax.set_xlabel("z1"); ax.set_ylabel("z2"); ax.legend()
+class_regions(ax, classifier, z_train)
+class_scatter(ax, z_train[::6], y_train[::6], s=2, alpha=0.25)
+show = torch.arange(0, N, 6)
+for name in ["along margin gradient", "toward class centroid"]:
+    d = STEP * strategies[name][show]
+    ax.quiver(z0[show, 0], z0[show, 1], d[:, 0], d[:, 1], angles="xy", scale_units="xy", scale=1,
+              color=colors[name], width=0.004, label=name)
+ax.scatter(*centroid, marker="*", s=200, color="k", zorder=4, label=f"class {TARGET} centroid")
+ax.set_title(f"Moving latents toward class {TARGET}")
+ax.legend(loc="lower left", fontsize=8)
 
-axes[1].hist(result.cosine_similarities.detach().numpy(), bins=20, range=(-1.0, 1.0))
-axes[1].axvline(result.mean_alignment, color="red", lw=2,
-                label=f"mean={result.mean_alignment:.3f}")
-axes[1].set_title("Cosine similarity distribution")
-axes[1].set_xlabel("cos(Δμ, ∇m)"); axes[1].legend()
+for name, res in results.items():
+    axes[1].hist(res.cosine_similarities, bins=40, range=(-1, 1), alpha=0.6, color=colors[name],
+                 label=f"{name}: mean {res.mean_alignment:+.2f}, "
+                       f"{100 * res.fraction_aligned:.0f}% increase the margin")
+axes[1].set_xlabel(r"cosine$(\Delta z,\ \nabla m_{%d})$" % TARGET)
+axes[1].set_ylabel("count")
+axes[1].set_title("Alignment with the decision-margin gradient")
+axes[1].legend(loc="upper left", fontsize=8)
+axes[1].set_ylim(top=axes[1].get_ylim()[1] * 1.35)
+fig.suptitle("ex06  Gradient alignment: how directly does a latent displacement increase the target-class margin?")
+save(fig, "ex06_gradient_alignment")
 
-fig.tight_layout()
-fig.savefig(OUT / "ex06_gradient_alignment.png", dpi=80)
-plt.close()
-
-ok = result.mean_alignment > 0
-print(f"Mean alignment: {result.mean_alignment:.3f}, fraction aligned: {result.fraction_aligned:.3f} "
-      + ("PASS" if ok else "FAIL"))
+m = {name: r.mean_alignment for name, r in results.items()}
+ok = (m["along margin gradient"] > 0.99 and m["toward class centroid"] > m["random direction"]
+      and abs(m["random direction"]) < 0.2)
+print("Mean alignment: " + ", ".join(f"{k} {v:+.3f}" for k, v in m.items()) + "  " + ("PASS" if ok else "FAIL"))
 assert ok

@@ -15,6 +15,11 @@ arrangement, while holding the others fixed, and then check what the diagnostics
 Encoding is always the caller's job: the library only takes latent tensors and
 `torch.nn.Module`s.
 
+![Warp gallery](examples/figures/ex11_warp_gallery.png)
+*The six warps applied to the 2-D latents of a toy VAE (colour = class), placed by how rough the
+map is and whether the class information survives. See [`examples/`](examples/README.md) for
+this and ten more worked examples.*
+
 ## Installation
 
 From a clone of this repository:
@@ -114,9 +119,10 @@ provide `forward_ste`, a straight-through estimator with an identity gradient.
 
 ## Examples
 
-`examples/` contains ten runnable scripts, one per diagnostic or warp, on small toy models.
-Each one saves a figure and asserts its expected outcome. See
-[`examples/README.md`](examples/README.md).
+`examples/` contains eleven runnable scripts, one per diagnostic or warp, on small toy models.
+Each one saves a figure and asserts its expected outcome. The
+[examples README](examples/README.md) shows every figure with a short explanation;
+`python examples/run_all.py` runs them all.
 
 ## Tests
 

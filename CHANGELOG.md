@@ -18,3 +18,6 @@
 - Uniform `Warp` interface (`forward`, `backproject`, `forward_ste`, `save`/`load`) and the `build_warp` factory.
 - `vq`, `scramble`, `class_scramble` (within/across class), `flow_warp` (normalizing flows, optional `normflows` extra), `piecewise_affine`, `class_collapse`.
 - Functional primitives `posthoc_vq`, `bijective_scramble`, `class_constrained_scramble`, `FlowWarp`, `fit_flow_ensemble`.
+
+### Examples
+- Eleven runnable examples on a toy 2-D VAE with a three-class latent classifier, each saving a figure and checking its expected outcome; `examples/run_all.py` runs them all. The figures are included in `examples/figures/` and shown in `examples/README.md`.
