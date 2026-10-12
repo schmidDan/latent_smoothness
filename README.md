@@ -1,4 +1,5 @@
 # latent_smoothness
+[![tests](https://github.com/schmidDan/latent_smoothness/actions/workflows/tests.yml/badge.svg)](https://github.com/schmidDan/latent_smoothness/actions/workflows/tests.yml)
 
 Diagnostics for the geometry and smoothness of learned latent spaces, plus a small
 library of controlled *latent warps* for ablation experiments.
